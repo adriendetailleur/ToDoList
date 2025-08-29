@@ -1,0 +1,29 @@
+/* ================================
+   Styles de base – To-Do List
+   ================================ */
+
+/* Variables globales */
+:root {
+  --bg: #ffffff;
+  --fg: #121212;
+  --accent: #2563eb;
+  --accent-hover: #1e40af;
+  --card: #f5f5f5;
+  --border: #e5e7eb;
+}
+
+/* Reset léger */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Style global */
+body {
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.5;
+  padding: 2rem;
+}
