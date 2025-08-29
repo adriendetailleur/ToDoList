@@ -27,3 +27,17 @@ body {
   line-height: 1.5;
   padding: 2rem;
 }
+
+header {
+    text-align: center;
+}
+
+form, ul {
+    text-align: center;
+    padding: 30px;
+}
+
+button {
+    margin: 0 0 0 30px;
+    padding: 3px 10px;
+}
