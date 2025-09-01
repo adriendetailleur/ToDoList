@@ -9,12 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             const li = document.createElement("li");
             li.textContent = element.value.trim();
-            console.log('coucou');
             todolist.appendChild(li);
         }
         element.value = "";
         element.focus();
     }
 
+    function elementDone(event) {
+        selectedElement = event.target.closest('li');
+        selectedElement.classList.toggle("done");
+    }
+
     form.addEventListener("submit", addElementInList);
+    todolist.addEventListener("click", elementDone);
 });
