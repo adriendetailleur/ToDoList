@@ -17,16 +17,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clickElementDone(event) {
-        selectedElement = event.target.closest('li');
+        const selectedElement = event.target.closest('li');
+        if (!selectedElement || !todolist.contains(selectedElement)) return;
         selectedElement.classList.toggle("done");
     }
 
     function keydownElementDone(event) {
-        if (event.code == " " || event.code == "Enter")
-        {
-            selectedElement = event.target.closest('li');
-            selectedElement.classList.toggle("done");
-        }
+        if (event.code !== 'Space' && event.code !== 'Enter') return;
+
+        const selectedElement = event.target.closest('li');
+        if (!selectedElement || !todolist.contains(selectedElement)) return;
+        if (event.code !== 'Space' && event.code !== 'Enter') return;
+        selectedElement.classList.toggle("done");
     }
 
     form.addEventListener("submit", addElementInList);
