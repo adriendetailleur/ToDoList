@@ -44,3 +44,8 @@ button {
   margin: 0 0 0 30px;
   padding: 3px 10px;
 }
+
+.done {
+  text-decoration:line-through;
+  opacity: 0.5;
+}
