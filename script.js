@@ -9,12 +9,29 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             const li = document.createElement("li");
             li.textContent = element.value.trim();
-            console.log('coucou');
+            li.tabIndex = "0";
             todolist.appendChild(li);
         }
         element.value = "";
         element.focus();
     }
 
+    function clickElementDone(event) {
+        const selectedElement = event.target.closest('li');
+        if (!selectedElement || !todolist.contains(selectedElement)) return;
+        selectedElement.classList.toggle("done");
+    }
+
+    function keydownElementDone(event) {
+        if (event.code !== 'Space' && event.code !== 'Enter') return;
+
+        const selectedElement = event.target.closest('li');
+        if (!selectedElement || !todolist.contains(selectedElement)) return;
+        if (event.code !== 'Space' && event.code !== 'Enter') return;
+        selectedElement.classList.toggle("done");
+    }
+
     form.addEventListener("submit", addElementInList);
+    todolist.addEventListener("click", clickElementDone);
+    todolist.addEventListener("keydown", keydownElementDone);
 });
