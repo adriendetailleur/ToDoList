@@ -29,15 +29,18 @@ body {
 }
 
 header {
-    text-align: center;
+  text-align: center;
 }
 
 form, ul {
-    text-align: center;
-    padding: 30px;
+  text-align: center;
+  place-items: center;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 30px;
 }
 
 button {
-    margin: 0 0 0 30px;
-    padding: 3px 10px;
+  margin: 0 0 0 30px;
+  padding: 3px 10px;
 }
