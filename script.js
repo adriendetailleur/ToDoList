@@ -8,8 +8,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (element.value.trim() != "")
         {
             const li = document.createElement("li");
-            li.textContent = element.value.trim();
+            const label = document.createElement('span');
+            label.className = 'label';
+            label.textContent = element.value.trim();;
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';                 // évite une soumission du form
+            removeBtn.className = 'remove';
+            removeBtn.setAttribute('aria-label', 'Supprimer');
+            removeBtn.textContent = '✕'; 
             li.tabIndex = "0";
+            li.appendChild(label);
+            li.appendChild(removeBtn);
             todolist.appendChild(li);
         }
         element.value = "";
