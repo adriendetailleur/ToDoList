@@ -10,13 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const li = document.createElement("li");
             const label = document.createElement('span');
             label.className = 'label';
-            label.textContent = element.value.trim();;
+            label.textContent = element.value.trim();
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';                 // évite une soumission du form
             removeBtn.className = 'remove';
             removeBtn.setAttribute('aria-label', 'Supprimer');
             removeBtn.textContent = '✕'; 
-            li.tabIndex = "0";
+            li.tabIndex = 0;
             li.appendChild(label);
             li.appendChild(removeBtn);
             todolist.appendChild(li);
@@ -25,13 +25,20 @@ document.addEventListener('DOMContentLoaded', () => {
         element.focus();
     }
 
-    function clickElementDone(event) {
+    function clickElement(event) {
+        const removeCtrl = event.target.closest('.remove');
         const selectedElement = event.target.closest('li');
+        if (removeCtrl)
+        {
+            todolist.removeChild(selectedElement);
+            return;
+        }
         if (!selectedElement || !todolist.contains(selectedElement)) return;
         selectedElement.classList.toggle("done");
     }
 
     function keydownElementDone(event) {
+        if (event.target.closest('.remove')) return;
         if (event.code !== 'Space' && event.code !== 'Enter') return;
 
         const selectedElement = event.target.closest('li');
@@ -41,6 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     form.addEventListener("submit", addElementInList);
-    todolist.addEventListener("click", clickElementDone);
+    todolist.addEventListener("click", clickElement);
     todolist.addEventListener("keydown", keydownElementDone);
 });
