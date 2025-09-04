@@ -4,6 +4,25 @@ const form = document.querySelector('form');
 const element = document.querySelector('#element');
 const todolist = document.querySelector('#to-do-list');
 
+function loadState() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) { return; }
+
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { return; }
+
+    if (!Array.isArray(data)) { return; }
+
+    todolist.innerHTML = '';
+
+    for (const item of data)
+    {
+        if (!item?.text?.trim()) { continue; }
+        todolist.appendChild(createToDoItem(item.text, item.done));
+    }
+}
+
 function addElementInList(event) {
     event.preventDefault();
     const text = element.value.trim();
@@ -72,6 +91,8 @@ function saveState() {
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
 }
+
+loadState();
 
 form.addEventListener("submit", addElementInList);
 todolist.addEventListener("click", clickElement);
