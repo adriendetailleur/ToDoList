@@ -92,8 +92,29 @@ function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
 }
 
+function editElement(event) {
+    if (event.target.closest('.remove')) return;
+    const label = event.target.closest('.label');
+    if (!label) return;
+    const li = label.closest('li');
+    if (!li || li.classList.contains('editing')) return;
+    li.classList.add('editing');
+
+    const input = document.createElement('input');
+    input.type = "text";
+    input.className = "edit";
+    input.value = label.textContent;
+    input.setAttribute('aria-label', 'Modifier la tâche');
+    label.after(input);
+
+    input.focus();
+    input.setSelectionRange(0, input.value.length);
+    input.dataset.prev = label.textContent;
+}
+
 loadState();
 
 form.addEventListener("submit", addElementInList);
 todolist.addEventListener("click", clickElement);
 todolist.addEventListener("keydown", keydownElementDone);
+todolist.addEventListener("dblclick", editElement);
