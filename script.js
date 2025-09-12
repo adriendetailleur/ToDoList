@@ -26,7 +26,7 @@ function loadState() {
 function addElementInList(event) {
     event.preventDefault();
     const text = element.value.trim();
-    if (text != "")
+    if (text !== "")
     {
         const li = createToDoItem(text);
         todolist.appendChild(li);
@@ -54,6 +54,8 @@ function createToDoItem(text, done=false) {
 }
 
 function clickElement(event) {
+    if (event.details > 1) return; // ignore dblclicks
+
     const removeCtrl = event.target.closest('.remove');
     const selectedElement = event.target.closest('li');
     if (removeCtrl)
@@ -68,11 +70,15 @@ function clickElement(event) {
 }
 
 function keydownElementDone(event) {
+    if (event.target.matches('.edit')) return;
+
     if (event.target.closest('.remove')) return;
     if (event.code !== 'Space' && event.code !== 'Enter') return;
     if (event.code === 'Space') event.preventDefault();
+
     const selectedElement = event.target.closest('li');
     if (!selectedElement || !todolist.contains(selectedElement)) return;
+    if (selectedElement.classList.contains('editing')) return;
     selectedElement.classList.toggle("done");
     saveState();
 }
@@ -112,9 +118,43 @@ function editElement(event) {
     input.dataset.prev = label.textContent;
 }
 
+function handleEditKeys(event) {
+    if (!event.target.matches('.edit')) return;
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    event.target.blur();
+}
+
+function handleEditBlur(event) {
+    if (!event.target.matches('.edit')) return;
+    finalizeEdit(event.target);     
+}
+
+function finalizeEdit(input) {
+    const li = input.closest('li');
+    const label = li?.querySelector('.label');
+    if (!li || !label) return;
+
+    const prevValue = input.dataset.prev ?? label.textContent;
+    const nextValue = input.value.trim();
+
+    if (!nextValue) {
+        label.textContent = prevValue;
+    }
+    else if (nextValue !== prevValue) {
+        label.textContent = nextValue;
+        saveState();
+    }
+    li.classList.remove('editing');
+    input.remove();
+    li.focus();
+}
+
 loadState();
 
 form.addEventListener("submit", addElementInList);
 todolist.addEventListener("click", clickElement);
+todolist.addEventListener("keydown", handleEditKeys);
+todolist.addEventListener('focusout', handleEditBlur);
 todolist.addEventListener("keydown", keydownElementDone);
 todolist.addEventListener("dblclick", editElement);
