@@ -69,6 +69,14 @@ li {
   margin: .5rem 0;
 }
 
+li.editing .label {
+  display: none;
+}
+
+li.editing .edit {
+  display: flex;
+}
+
 /* Bouton de suppression (UI only) */
 button.remove {
   border: none;
