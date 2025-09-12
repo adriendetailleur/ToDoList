@@ -248,6 +248,18 @@ function cancelEdit(input) {
     li.focus();
 }
 
+ /** @param {KeyboardEvent} event */
+function keydownStartEdit(event) {
+    if (!(event.target instanceof Element)) return;
+    if (event.target.matches('.edit')) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (!(event.code === 'F2') && !(event.key.toLowerCase() === 'e')) return;
+    const li = event.target.closest('li');
+    if (!(li instanceof HTMLLIElement)) return;
+    event.preventDefault();
+    startEdit(li);
+}
+
 loadState();
 
 form.addEventListener("submit", addElementInList);
@@ -255,4 +267,5 @@ todolist.addEventListener("click", clickElement);
 todolist.addEventListener("keydown", handleEditKeys);
 todolist.addEventListener('focusout', handleEditBlur);
 todolist.addEventListener("keydown", keydownElementDone);
+todolist.addEventListener("keydown", keydownStartEdit);
 todolist.addEventListener("dblclick", editElement);
