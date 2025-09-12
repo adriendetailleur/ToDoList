@@ -248,7 +248,7 @@ function cancelEdit(input) {
     li.focus();
 }
 
- /** @param {KeyboardEvent} event */
+/** @param {KeyboardEvent} event */
 function keydownStartEdit(event) {
     if (!(event.target instanceof Element)) return;
     if (event.target.matches('.edit')) return;
@@ -260,6 +260,34 @@ function keydownStartEdit(event) {
     startEdit(li);
 }
 
+/** @param {KeyboardEvent} event */
+function keydownDelete(event) {
+    if (!(event.target instanceof Element)) return;
+    if (event.target.matches('.edit')) return;
+    if (!(event.key === 'Delete') && !(event.key === 'Backspace')) return;
+    event.preventDefault();
+    const li = event.target.closest('li');
+    if (!(li instanceof HTMLLIElement)) return;
+    if (li.classList.contains('editing')) return;
+
+    const next = li.nextElementSibling;
+    const prev  = li.previousElementSibling;
+    const toFocus =
+        next instanceof HTMLElement ? next :
+        prev instanceof HTMLElement ? prev :
+        element;
+
+    const pending = labelClickTimers.get(li);
+    if (pending) {
+        clearTimeout(pending);
+        labelClickTimers.delete(li);
+    }
+
+    li.remove();
+    saveState();
+    toFocus && toFocus.focus( { preventScroll: true });
+}
+
 loadState();
 
 form.addEventListener("submit", addElementInList);
@@ -268,4 +296,5 @@ todolist.addEventListener("keydown", handleEditKeys);
 todolist.addEventListener('focusout', handleEditBlur);
 todolist.addEventListener("keydown", keydownElementDone);
 todolist.addEventListener("keydown", keydownStartEdit);
+todolist.addEventListener("keydown", keydownDelete);
 todolist.addEventListener("dblclick", editElement);
