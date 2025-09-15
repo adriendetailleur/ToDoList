@@ -1,11 +1,20 @@
+// @ts-check
 const STORAGE_KEY = 'todos';
 
 const labelClickTimers = new WeakMap();
 const CLICK_DELAY_MS = 200;
 
+/** @type {HTMLFormElement | null} */
 const form = document.querySelector('form');
+/** @type {HTMLInputElement | null} */
 const element = document.querySelector('#element');
+/** @type {HTMLUListElement | null} */
 const todolist = document.querySelector('#to-do-list');
+
+// Vérification au démarrage (narrowing runtime + type-safe)
+if (!form || !element || !todolist) {
+  throw new Error('DOM manquant: form, #element ou #to-do-list introuvable.');
+}
 
 function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -26,6 +35,9 @@ function loadState() {
     }
 }
 
+/**
+ * @param {{ preventDefault: () => void; }} event
+ */
 function addElementInList(event) {
     event.preventDefault();
     const text = element.value.trim();
@@ -39,6 +51,9 @@ function addElementInList(event) {
     element.focus();
 }
 
+/**
+ * @param {string} text
+ */
 function createToDoItem(text, done=false) {
     const li = document.createElement("li");
     const label = document.createElement('span');
@@ -57,7 +72,9 @@ function createToDoItem(text, done=false) {
     return li;
 }
 
+/** @param {MouseEvent} event */
 function clickElement(event) {
+    if (!(event.target instanceof Element)) return;
     if (event.detail > 1) return; // ignore dblclicks
     const removeCtrl = event.target.closest('.remove');
     const selectedElement = event.target.closest('li');
@@ -102,7 +119,9 @@ function clickElement(event) {
     saveState();
 }
 
+/** @param {KeyboardEvent} event */
 function keydownElementDone(event) {
+    if (!(event.target instanceof Element)) return;
     if (event.target.matches('.edit')) return;
 
     if (event.target.closest('.remove')) return;
@@ -131,33 +150,50 @@ function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
 }
 
+/** @param {MouseEvent} event */
 function editElement(event) {
-
+    if (!(event.target instanceof Element)) return;
     if (event.target.closest('.remove')) return;
     const label = event.target.closest('.label');
     if (!label) return;
+
     const li = label.closest('li');
+    if (!(li instanceof HTMLLIElement)) return;
+    if (li.classList.contains('editing')) return;
+
+    startEdit(li);
+}
+
+/** @param {HTMLLIElement} li */
+function startEdit(li) {
+    if (!li || li.classList.contains('editing')) return;
+    const label = li.querySelector('.label');
+    if (!label || li.querySelector('.edit')) return;
+
     const pending = labelClickTimers.get(li);
     if (pending) {
         clearTimeout(pending);
         labelClickTimers.delete(li);
     }
-    if (!li || li.classList.contains('editing')) return;
+
     li.classList.add('editing');
 
     const input = document.createElement('input');
-    input.type = "text";
-    input.className = "edit";
-    input.value = label.textContent;
+    input.type = 'text';
+    input.className = 'edit';
     input.setAttribute('aria-label', 'Modifier la tâche');
-    label.after(input);
 
+    input.value = label.textContent;
+    input.dataset.prev = label.textContent;
+
+    label.after(input);
     input.focus();
     input.setSelectionRange(0, input.value.length);
-    input.dataset.prev = label.textContent;
 }
 
+/** @param {KeyboardEvent} event */
 function handleEditKeys(event) {
+    if (!(event.target instanceof HTMLInputElement)) return;
     if (!event.target.matches('.edit')) return;
     if (event.key !== 'Enter' && event.key !== 'Escape') return;
     event.preventDefault();
@@ -170,12 +206,15 @@ function handleEditKeys(event) {
     }
 }
 
+/** @param {FocusEvent} event */
 function handleEditBlur(event) {
+    if (!(event.target instanceof HTMLInputElement)) return;
     if (!event.target.matches('.edit')) return;
     if (event.target.dataset.cancelled === "1") return;
     finalizeEdit(event.target);     
 }
 
+/** @param {HTMLInputElement} input */
 function finalizeEdit(input) {
     const li = input.closest('li');
     const label = li?.querySelector('.label');
@@ -196,6 +235,7 @@ function finalizeEdit(input) {
     li.focus();
 }
 
+/** @param {HTMLInputElement} input */
 function cancelEdit(input) {
     const li = input.closest('li');
     const label = li?.querySelector('.label');
@@ -208,6 +248,66 @@ function cancelEdit(input) {
     li.focus();
 }
 
+/** @param {KeyboardEvent} event */
+function keydownStartEdit(event) {
+    if (!(event.target instanceof Element)) return;
+    if (event.target.matches('.edit')) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (!(event.code === 'F2') && !(event.key.toLowerCase() === 'e')) return;
+    const li = event.target.closest('li');
+    if (!(li instanceof HTMLLIElement)) return;
+    event.preventDefault();
+    startEdit(li);
+}
+
+/** @param {KeyboardEvent} event */
+function keydownDelete(event) {
+    if (!(event.target instanceof Element)) return;
+    if (event.target.matches('.edit')) return;
+    if (!(event.key === 'Delete') && !(event.key === 'Backspace')) return;
+    event.preventDefault();
+    const li = event.target.closest('li');
+    if (!(li instanceof HTMLLIElement)) return;
+    if (li.classList.contains('editing')) return;
+
+    const next = li.nextElementSibling;
+    const prev  = li.previousElementSibling;
+    const toFocus =
+        next instanceof HTMLElement ? next :
+        prev instanceof HTMLElement ? prev :
+        element;
+
+    const pending = labelClickTimers.get(li);
+    if (pending) {
+        clearTimeout(pending);
+        labelClickTimers.delete(li);
+    }
+
+    li.remove();
+    saveState();
+    toFocus && toFocus.focus( { preventScroll: true });
+}
+
+/** @param {KeyboardEvent} event */
+function keydownNextOrPreviousElement(event) {
+    if (!(event.target instanceof Element)) return;
+    if (event.target.matches('.edit')) return;
+    if (!(event.key === "ArrowDown") && !(event.key === "ArrowUp")) return;
+    event.preventDefault();
+    const li = event.target.closest('li');
+    if (!(li instanceof HTMLLIElement)) return;
+    let toFocus;
+    if (event.key == "ArrowDown") {
+        const next = li.nextElementSibling;
+        if (next instanceof HTMLLIElement) { toFocus = next; }
+    }
+    else {
+        const prev  = li.previousElementSibling;
+        if (prev instanceof HTMLLIElement) { toFocus = prev; }
+    }
+    toFocus && toFocus.focus( { preventScroll: true });
+}
+
 loadState();
 
 form.addEventListener("submit", addElementInList);
@@ -215,4 +315,7 @@ todolist.addEventListener("click", clickElement);
 todolist.addEventListener("keydown", handleEditKeys);
 todolist.addEventListener('focusout', handleEditBlur);
 todolist.addEventListener("keydown", keydownElementDone);
+todolist.addEventListener("keydown", keydownStartEdit);
+todolist.addEventListener("keydown", keydownDelete);
+todolist.addEventListener("keydown", keydownNextOrPreviousElement);
 todolist.addEventListener("dblclick", editElement);
