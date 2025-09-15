@@ -288,6 +288,26 @@ function keydownDelete(event) {
     toFocus && toFocus.focus( { preventScroll: true });
 }
 
+/** @param {KeyboardEvent} event */
+function keydownNextOrPreviousElement(event) {
+    if (!(event.target instanceof Element)) return;
+    if (event.target.matches('.edit')) return;
+    if (!(event.key === "ArrowDown") && !(event.key === "ArrowUp")) return;
+    event.preventDefault();
+    const li = event.target.closest('li');
+    if (!(li instanceof HTMLLIElement)) return;
+    let toFocus;
+    if (event.key == "ArrowDown") {
+        const next = li.nextElementSibling;
+        if (next instanceof HTMLLIElement) { toFocus = next; }
+    }
+    else {
+        const prev  = li.previousElementSibling;
+        if (prev instanceof HTMLLIElement) { toFocus = prev; }
+    }
+    toFocus && toFocus.focus( { preventScroll: true });
+}
+
 loadState();
 
 form.addEventListener("submit", addElementInList);
@@ -297,4 +317,5 @@ todolist.addEventListener('focusout', handleEditBlur);
 todolist.addEventListener("keydown", keydownElementDone);
 todolist.addEventListener("keydown", keydownStartEdit);
 todolist.addEventListener("keydown", keydownDelete);
+todolist.addEventListener("keydown", keydownNextOrPreviousElement);
 todolist.addEventListener("dblclick", editElement);
