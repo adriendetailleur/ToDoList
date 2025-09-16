@@ -95,6 +95,7 @@ function clickElement(event) {
 
             selectedElement.classList.toggle('done');
             saveState();
+            applyFilterFromHash();
         }, CLICK_DELAY_MS);
 
         labelClickTimers.set(selectedElement, id);
@@ -133,6 +134,7 @@ function keydownElementDone(event) {
     if (selectedElement.classList.contains('editing')) return;
     selectedElement.classList.toggle("done");
     saveState();
+    applyFilterFromHash();
 }
 
 function saveState() {
@@ -285,6 +287,7 @@ function keydownDelete(event) {
 
     li.remove();
     saveState();
+    applyFilterFromHash();
     toFocus && toFocus.focus( { preventScroll: true });
 }
 
@@ -308,7 +311,121 @@ function keydownNextOrPreviousElement(event) {
     toFocus && toFocus.focus( { preventScroll: true });
 }
 
+/** @param {string|undefined} hash */
+function normalizeHash(hash) {
+    let h = String(hash ?? '').trim().toLowerCase();
+
+    if (h.startsWith('#')) { h = h.slice(1); }
+    if (h.search(/[?#]/) != -1) { h = h.slice(0, h.search(/[?#]/)); }
+    h = h.replace(/\/+/g, '/');
+    if (h && !h.startsWith('/')) { h = '/' + h };
+    if (h !== '/' && h.endsWith('/')) { h = h.slice(0, -1) };
+
+    if (h === "" || h === "/") { return "#/"; }
+    if (h === "/active") { return "#/active"; }
+    if (h === "/completed") { return "#/completed"; }
+    return "#/";
+}
+
+/** @param {string|undefined} route */
+function predicateFor(route) {
+    switch (route) {
+        case "#/":          return () => true; 
+        case "#/active":    return (/** @type {{ done: any; }} */ item) => !item.done;
+        case "#/completed": return (/** @type {{ done: any; }} */ item) => item.done;
+        default:            return () => true;
+    }
+}
+
+/**
+ * @param {'all'|'active'|'completed'} mode
+ * @returns {string} label du lien actif (utile pour la live-region)
+ */
+function setActiveFilterUI(mode) {
+    const nav = document.getElementById('filters');
+    if (!nav) return '';
+    const links = nav.querySelectorAll('a');
+    let activeLabel = '';
+
+    links.forEach(a => {
+        const isActive = (a.dataset.filter === mode);
+        a.classList.toggle('is-active', isActive);
+        if (isActive) {
+            a.setAttribute('aria-current','page');
+            activeLabel = a.textContent.trim();
+        }
+        else {
+            a.removeAttribute('aria-current');
+        }
+    });
+    return activeLabel;
+}
+
+/**
+ * @param {'#/'|'#/active'|'#/completed'|string} route
+ * @returns {{mode:'all'|'active'|'completed', label:'Tous'|'Actifs'|'Terminés'}}
+ */
+function routeToUI(route) {
+    route = normalizeHash(route);
+    switch (route) {
+        case '#/': return { mode: 'all', label: 'Tous' };
+        case '#/active': return { mode: 'active', label: 'Actifs' };
+        case '#/completed': return { mode: 'completed', label: 'Terminés' };
+        default: return { mode: 'all', label: 'Tous' };
+    }
+}
+
+/**
+ * Applique le filtre en masquant/affichant les <li>.
+ * @param {(item: {done:boolean}) => boolean} predicate
+ * @returns {number} nombre d'items visibles
+ */
+function applyFilterToList(predicate) {
+    const ul = document.getElementById('to-do-list');
+    if (!ul) return 0;
+
+    const items = ul.querySelectorAll('li');
+    let visible = 0;
+
+    items.forEach(li => {
+        const done = li.classList.contains('done');
+
+        // Si l'item est en édition, on le garde toujours visible
+        const isEditing = li.classList.contains('editing');
+        const keep = isEditing ? true : predicate({ done });
+
+        li.hidden = !keep;
+
+        if (keep) visible++;
+    });
+
+    return visible;
+}
+
+function applyFilterFromHash() {
+    const route = normalizeHash(window.location.hash);
+    const { mode, label } = routeToUI(route);
+    const predicate = predicateFor(route);
+
+    const activeLabel = setActiveFilterUI(mode);
+
+    const count = applyFilterToList(predicate);
+
+    updateLiveRegion(activeLabel || label, count);
+}
+
+/**
+ * @param {string} label
+ * @param {number} count
+ */
+function updateLiveRegion(label, count) {
+    const srStatus = document.querySelector("#sr-status");
+    if (!srStatus) return;
+    srStatus.textContent = `${label} — ${count} tâches`;
+}
+
 loadState();
+applyFilterFromHash();
 
 form.addEventListener("submit", addElementInList);
 todolist.addEventListener("click", clickElement);
@@ -319,3 +436,5 @@ todolist.addEventListener("keydown", keydownStartEdit);
 todolist.addEventListener("keydown", keydownDelete);
 todolist.addEventListener("keydown", keydownNextOrPreviousElement);
 todolist.addEventListener("dblclick", editElement);
+window.addEventListener('load', applyFilterFromHash);
+window.addEventListener('hashchange', applyFilterFromHash);

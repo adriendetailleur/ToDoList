@@ -11,6 +11,15 @@
         <h1><img src="img/to-do-list.png" width="50"> To Do List !</h1>
     </header>
 
+    <nav id="filters" aria-label="Filtres">
+        <a href="#/" data-filter="all">Tous</a>
+        <span aria-hidden="true"> | </span>
+        <a href="#/active" data-filter="active">Actifs</a>
+        <span aria-hidden="true"> | </span>
+        <a href="#/completed" data-filter="completed">Terminés</a>
+    </nav>
+    <p id="sr-status" class="sr-only" aria-live="polite"></p>
+    
     <form id="form">
         <label for="element">Element à ajouter dans la liste </label>
         <input type="text" id="element" name="element"/>
